@@ -1,144 +1,113 @@
-# hoa13.1
 ---
-# Playbook: install_openstack.yml
-
-# Install NTP on all servers
-- name: Install NTP on all servers
-  hosts: all
+- name: Install NTP on Controller Node
+  hosts: controller
   become: true
   tasks:
-    - name: Install NTP package
+    - name: Install NTP
       apt:
         name: ntp
         state: present
-        update_cache: yes
+      tags:
+        - ntp  # Tag this task as 'ntp'
 
-# Install OpenStack clients on controller node
-- name: Install OpenStack client dependencies on controller
+- name: Install OpenStack Packages on Controller Node
   hosts: controller
   become: true
   tasks:
-    - name: Install OpenStack clients
+    - name: Install OpenStack packages (controller services)
       apt:
-        name:
-          - python3-openstackclient
-          - python3-keystoneclient
-          - python3-novaclient
-          - python3-glanceclient
-          - python3-neutronclient
-          - python3-cinderclient
-          - python3-heatclient
-          - python3-swiftclient
-          - python3-barbicanclient
-          - python3-manilaclient
-          - python3-troveclient
-          - python3-designateclient
-          - python3-ironicclient
+        name: "{{ item }}"
         state: present
-        update_cache: yes
+      loop:
+        - python3-openstackclient
+        - nova-api
+        - nova-scheduler
+        - nova-conductor
+        - openstack-dashboard
+        - rabbitmq-server
+        - memcached
+        - mysql-server
+        - apache2
+        - libapache2-mod-wsgi
+        - neutron-server
+        - keystone
+        - glance
+      when: ansible_os_family == 'Debian'
+      tags:
+        - openstack_packages  # Tag for the OpenStack packages
 
-    - name: Verify OpenStack client installation
-      command: openstack --version
-      register: openstack_version
-
-    - name: Show OpenStack client version
-      debug:
-        var: openstack_version.stdout
-
-# Install OpenStack packages on controller node
-- name: Install OpenStack packages on controller
+- name: Install SQL Database (MySQL) on Controller Node
   hosts: controller
   become: true
   tasks:
-    - name: Install OpenStack packages
-      apt:
-        name:
-          - keystone
-          - nova-api
-          - nova-conductor
-          - nova-scheduler
-          - nova-cert
-          - glance
-          - neutron-server
-          - neutron-plugin-ml2
-          - neutron-linuxbridge-agent
-          - neutron-dhcp-agent
-          - neutron-l3-agent
-          - cinder-api
-          - cinder-scheduler
-          - horizon
-        state: present
-        update_cache: yes
-
-# Configure SQL Database on database server
-- name: Configure SQL Database on database server
-  hosts: database
-  become: true
-  tasks:
-    - name: Install MySQL server
+    - name: Install MySQL Server
       apt:
         name: mysql-server
         state: present
-        update_cache: yes
+      tags:
+        - mysql  # Tag for MySQL installation
 
-    - name: Configure MySQL database for OpenStack
-      mysql_db:
-        name: openstack
-        state: present
-
-    - name: Ensure MySQL service is started and enabled
+    - name: Start MySQL Service
       service:
         name: mysql
         state: started
         enabled: yes
+      tags:
+        - mysql_service  # Tag for MySQL service
 
-# Install RabbitMQ (Message Queue) on message_queue server
-- name: Install RabbitMQ (Message Queue) on message_queue server
-  hosts: message_queue
+- name: Install Message Queue (RabbitMQ) on Controller Node
+  hosts: controller
   become: true
   tasks:
-    - name: Install RabbitMQ server
+    - name: Install RabbitMQ
       apt:
         name: rabbitmq-server
         state: present
-        update_cache: yes
+      tags:
+        - rabbitmq  # Tag for RabbitMQ installation
 
-    - name: Ensure RabbitMQ service is started and enabled
+    - name: Start RabbitMQ Service
       service:
         name: rabbitmq-server
         state: started
         enabled: yes
+      tags:
+        - rabbitmq_service  # Tag for RabbitMQ service
 
-# Install Memcached on memcached server
-- name: Install Memcached on memcached server
-  hosts: memcached
+- name: Install Memcached on Controller Node
+  hosts: controller
   become: true
   tasks:
     - name: Install Memcached
       apt:
         name: memcached
         state: present
-        update_cache: yes
+      tags:
+        - memcached  # Tag for Memcached installation
 
-    - name: Ensure Memcached service is started and enabled
+    - name: Start Memcached Service
       service:
         name: memcached
         state: started
         enabled: yes
+      tags:
+        - memcached_service  # Tag for Memcached service
 
-# Install Etcd on etcd server
-- name: Install Etcd on etcd server
-  hosts: etcd
+- name: Install and Configure Etcd on Controller Node
+  hosts: controller
   become: true
   tasks:
     - name: Install Etcd
       apt:
         name: etcd
         state: present
-        update_cache: yes
+      tags:
+        - etcd  # Tag for Etcd installation
 
-    - name: Ensure Etcd service is started and enabled
+    - name: Start Etcd Service
       service:
         name: etcd
         state: started
         enabled: yes
+      tags:
+        - etcd_service  # Tag for Etcd service
