@@ -1,0 +1,20 @@
+[controller]
+192.168.56.13 ansible_user=catapang
+
+[compute]
+192.168.56.13 ansible_user=catapang
+
+[database]
+192.168.56.13 ansible_user=catapang
+
+[message_queue]
+192.168.56.13 ansible_user=catapang
+
+[memcached]
+192.168.56.13 ansible_user=catapang
+
+[etcd]
+192.168.56.13 ansible_user=catapang
+
+[all:vars]
+ansible_python_interpreter=/usr/bin/python3
